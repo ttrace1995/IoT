@@ -172,11 +172,10 @@ class VirtualDeviceObject(object):
             cursor.execute(sql_locno)
             loc = cursor.fetchone()
             self.LOCATION_NUMBER = loc[0]
-            print ( self.LOCATION_NUMBER )
             
             
             sql_time_start = "SELECT MAX("+self.DB_DATA_TIME+") FROM "+self.DB_DATA_TABLE+" WHERE "+self.DB_DATA_LOCATIONNO+"="+self.LOCATION_NUMBER.__str__()
-            print ( sql_time_start )
+
             cursor.execute(sql_time_start)
             time = cursor.fetchone()
             if time[0].__str__() == 'None':
@@ -185,12 +184,10 @@ class VirtualDeviceObject(object):
             else:
                 self.LAST_TIMESTAMP = time[0].__str__()
                 self.HOLD_TIMESTAMP = time[0].__str__()
+
             
+            print ( self.LOCATION_NUMBER )
             print ( self.LAST_TIMESTAMP )
-            print ( self.HOLD_TIMESTAMP )
-            
-            #print ( self.iothub_client_init() )
-            #self.start()
             self.iothub_try()
             
         except IoTHubError as iothub_error:
@@ -225,16 +222,16 @@ class VirtualDeviceObject(object):
             if self.HOLD_TIMESTAMP == self.LAST_TIMESTAMP:
                 self.DATA = "[NO NEW DATA]"
                 return
-            print ( self.LAST_TIMESTAMP )
-            print ( self.HOLD_TIMESTAMP )
-            sql2 = "SELECT _Speed FROM targets WHERE locationNo="+self.LOCATION_NUMBER.__str__()+" AND _Time>"+self.LAST_TIMESTAMP.__str__()+" AND _Time<="+self.HOLD_TIMESTAMP.__str__()+" ORDER BY _Speed ASC" 
-            cursor.execute(sql2)
-            result2 = cursor.fetchall()
-            self.DATA = map(sum, result2)
-            print( map(sum, result2) )
             
-            self.LAST_TIMESTAMP = self.HOLD_TIMESTAMP
-            self.HOLD_TIMESTAMP = 0
+            else: 
+                sql2 = "SELECT _Speed FROM targets WHERE locationNo="+self.LOCATION_NUMBER.__str__()+" AND _Time>"+self.LAST_TIMESTAMP.__str__()+" AND _Time<="+self.HOLD_TIMESTAMP.__str__()+" ORDER BY _Speed ASC" 
+                cursor.execute(sql2)
+                result2 = cursor.fetchall()
+                self.DATA = map(sum, result2)
+                print( map(sum, result2) )
+            
+                self.LAST_TIMESTAMP = self.HOLD_TIMESTAMP
+                self.HOLD_TIMESTAMP = 0
             
             
         except IoTHubError as iothub_error:
@@ -249,48 +246,6 @@ class VirtualDeviceObject(object):
                 #print("Database does not exist")
             #else:
                 #print(err)
-        
-    #Runs on a loop, checks_for_updates while time.sleep, sends data to IoT
-    def start(self):
-        try:
-            client = self.iothub_client_init()
-            message_counter = 0
-
-            while True:   
-                msg_txt_formatted = "\nDEVICE_ID: "+self.DEVICE_ID+"\nLAST_UPDATE: "+self.LAST_TIMESTAMP.__str__()+"\nDATA: "+self.DATA.__str__()+"\n"
-                # messages can be encoded as string or bytearray
-                if (message_counter & 1) == 1:
-                    message = IoTHubMessage(bytearray(msg_txt_formatted, 'utf8'))
-                else:
-                    message = IoTHubMessage(msg_txt_formatted)
-                # optional: assign ids
-                message.message_id = "message_%d" % message_counter
-                message.correlation_id = "correlation_%d" % message_counter
-                # optional: assign properties
-                prop_map = message.properties()
-                prop_text = "PropMsg_%d" % message_counter
-                prop_map.add("Time Stamp", prop_text)
-
-                client.send_event_async(message, send_confirmation_callback, message_counter)
-                print ( "IoTHubClient.send_event_async accepted message [%d] for transmission to IoT Hub." % message_counter )
-
-                status = client.get_send_status()
-                print ( "Send status: %s" % status )
-                time.sleep(10)
-                 
-                self.check_for_updates()
-                 
-                status = client.get_send_status()
-                print ( "Send status: %s" % status )
-
-                message_counter += 1
-                 
-
-        except IoTHubError as iothub_error:
-            print ( "Unexpected error %s from IoTHub" % iothub_error )
-            return
-        except KeyboardInterrupt:
-            print ( "IoTHubClient sample stopped" )
             
     def iothub_try(self):
         try:
@@ -329,14 +284,8 @@ class VirtualDeviceObject(object):
             print ( "IoTHubClient sample stopped" )
         
 #[REGISTERED DEVICE ID]
-#[ACCOUNT HOLDERS NAME (OPTIONAL)]
-#[HOST NAME (SEE METHOD CreateDeviceConnectionString FOR FORMAT)
-#[HOST DATABASE USERNAME]
-#[HOST DATABASE PASSWORD]
-#[HOST DATABASE SERVER IP]
-#[HOST DATABASE NAME]
 if __name__ == '__main__':
-    device = VirtualDeviceObject("::VD::0000179eff59")
+    device = VirtualDeviceObject("::VD::0000179df19f")
      
      
 
