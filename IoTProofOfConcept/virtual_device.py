@@ -94,6 +94,9 @@ class VirtualDeviceObject(object):
                     self.DATABASE_CONFIG = field['database_config']
                     self.PRIMARY_KEY = field['device_primary_key']
                     
+            print ("NO REGISTERED DEVICE FOUND WITH DEVICE ID: "+self.DEVICE_ID)
+            return
+                    
         with open('settings/iot.json') as json_data_file:
             data = json.load(json_data_file)
             for field in data['iot_config']:
@@ -186,9 +189,6 @@ class VirtualDeviceObject(object):
                 self.LAST_TIMESTAMP = time[0].__str__()
                 self.HOLD_TIMESTAMP = time[0].__str__()
 
-            
-            print ( self.LOCATION_NUMBER )
-            print ( self.LAST_TIMESTAMP )
             self.iothub_try()
             
         except IoTHubError as iothub_error:
@@ -249,9 +249,7 @@ class VirtualDeviceObject(object):
         self.MIN_SPEED = min(self.DATA)
         self.MEAN_SPEED = (sum(self.DATA) / self.TOTAL_TARGETS)
             
-            
-            
-            
+              
     def iothub_try(self):
         try:
             client = self.iothub_client_init()
