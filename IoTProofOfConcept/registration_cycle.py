@@ -108,7 +108,6 @@ def cycle_IDs():
                     break
                 elif REGISTERED_LIST[j][6:] != ''.join(ID_LIST[i]) and REGISTERED_LIST.__len__() == (j+1):
                     print("NEW DEVICE DISCOVERED: "+ ''.join(ID_LIST[i])+"\n")
-                    #get_device("::VD::"+''.join(ID_LIST[i])
                     create_new_device(''.join(ID_LIST[i]))
                     
                     

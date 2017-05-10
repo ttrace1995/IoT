@@ -1,6 +1,6 @@
 '''
 Created on May 3, 2017
-@author: tyler
+@author: tyler_tracey
 '''
 
 import time
@@ -51,12 +51,13 @@ class VirtualDeviceObject(object):
     MESSAGE_TIMEOUT = 10000
     SEND_CALLBACKS = 0
     INTERVAL = 5
+
+    DATA = []
+    TOTAL_TARGETS = "Waiting for sync..."
+    MAX_SPEED = "Waiting for sync..."
+    MIN_SPEED = "Waiting for sync..."
+    MEAN_SPEED = "Waiting for sync..."
     
-    
-    
-    DATA = "[DEVICE_CREATION]"
-    TOTAL_TARGETS = ""
-    AVERAGE_SPEED_ALL_LANES = ""
     
     PROTOCOL = IoTHubTransportProvider.MQTT
     PROTOCOL_HTTP = IoTHubTransportProvider.HTTP
@@ -219,19 +220,20 @@ class VirtualDeviceObject(object):
             print( "Queried Timestamp:\t"+self.HOLD_TIMESTAMP.__str__() )
             print( "Last Updated Timestamp:\t"+self.LAST_TIMESTAMP.__str__() )
             
-            if self.HOLD_TIMESTAMP == self.LAST_TIMESTAMP:
-                self.DATA = "[NO NEW DATA]"
-                return
-            
-            else: 
-                sql2 = "SELECT _Speed FROM targets WHERE locationNo="+self.LOCATION_NUMBER.__str__()+" AND _Time>"+self.LAST_TIMESTAMP.__str__()+" AND _Time<="+self.HOLD_TIMESTAMP.__str__()+" ORDER BY _Speed ASC" 
-                cursor.execute(sql2)
-                result2 = cursor.fetchall()
-                self.DATA = map(sum, result2)
-                print( map(sum, result2) )
+            if self.HOLD_TIMESTAMP > self.LAST_TIMESTAMP:
+                pull_data = "SELECT "+self.DB_DATA_SPEED+" FROM "+self.DB_DATA_TABLE+" WHERE "+self.DB_DATA_LOCATIONNO+"="+self.LOCATION_NUMBER.__str__()+" AND _Time>"+self.LAST_TIMESTAMP.__str__()+" AND _Time<="+self.HOLD_TIMESTAMP.__str__()+" ORDER BY "+self.DB_DATA_SPEED+" ASC" 
+                cursor.execute(pull_data)
+                data = cursor.fetchall()
+                
+                self.DATA = list(map(sum, data))
+                print ( self.DATA )
             
                 self.LAST_TIMESTAMP = self.HOLD_TIMESTAMP
                 self.HOLD_TIMESTAMP = 0
+                
+                self.calculate()
+                
+                return True
             
             
         except IoTHubError as iothub_error:
@@ -239,43 +241,47 @@ class VirtualDeviceObject(object):
             return
         except KeyboardInterrupt:
             print ( "IoTHubClient sample stopped" )
-        #except mysql.connector.Error as err:
-            #if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                #print("Something is wrong with your user name or password")
-            #elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                #print("Database does not exist")
-            #else:
-                #print(err)
+                
+    def calculate(self):
+            
+        self.TOTAL_TARGETS = len(self.DATA)
+        self.MAX_SPEED = max(self.DATA)
+        self.MIN_SPEED = min(self.DATA)
+        self.MEAN_SPEED = (sum(self.DATA) / self.TOTAL_TARGETS)
+            
+            
+            
             
     def iothub_try(self):
         try:
             client = self.iothub_client_init()
             message_counter = 0
             while True:
-                msg_txt_formatted = "\nDEVICE_ID: "+self.DEVICE_ID+"\nLAST_UPDATE: "+self.LAST_TIMESTAMP.__str__()+"\nDATA: "+self.DATA.__str__()+"\n"
-                # messages can be encoded as string or bytearray
-                if (message_counter & 1) == 1:
-                    message = IoTHubMessage(bytearray(msg_txt_formatted, 'utf8'))
-                else:
-                    message = IoTHubMessage(msg_txt_formatted)
-                # optional: assign ids
-                message.message_id = "message_%d" % message_counter
-                message.correlation_id = "correlation_%d" % message_counter
-                # optional: assign properties
-                #prop_map = message.properties()
-                #prop_map.add("temperatureAlert", 'true' if temperature > 28 else 'false')
-                client.send_event_async(message, send_confirmation_callback, message_counter)
-                        
-                status = client.get_send_status()
-                print ( "Send status: %s" % status )
-                time.sleep(10)
-                 
-                self.check_for_updates()
-                 
-                status = client.get_send_status()
-                print ( "Send status: %s" % status )
-
-                message_counter += 1
+    
+                is_update = self.check_for_updates()
+                
+                if is_update == True:
+                    msg_txt_formatted = "\nLAST_UPDATE: "+self.LAST_TIMESTAMP.__str__()+"\n\nTOTAL_TARGETS: "+self.TOTAL_TARGETS.__str__()+"\nMAX_SPEED: "+self.MAX_SPEED.__str__()+"\nMIN_SPEED: "+self.MIN_SPEED.__str__()+"\nMEAN SPEED: "+self.MEAN_SPEED.__str__()+"\n"
+                    # messages can be encoded as string or bytearray
+                    print ( msg_txt_formatted )
+                    if (message_counter & 1) == 1:
+                        message = IoTHubMessage(bytearray(msg_txt_formatted, 'utf8'))
+                    else:
+                        message = IoTHubMessage(msg_txt_formatted)
+                        # optional: assign ids
+                        message.message_id = "message_%d" % message_counter
+                        message.correlation_id = "correlation_%d" % message_counter
+                        # optional: assign properties
+                        #prop_map = message.properties()
+                        #prop_map.add("temperatureAlert", 'true' if temperature > 28 else 'false')
+                        client.send_event_async(message, send_confirmation_callback, message_counter)
+                        is_update = False
+                
+                else:      
+                    status = client.get_send_status()
+                    print ( "Send status: %s" % status )
+                    time.sleep(10)
+                    message_counter += 1
                         
         except IoTHubError as iothub_error:
             print ( "Unexpected error %s from IoTHub" % iothub_error )
