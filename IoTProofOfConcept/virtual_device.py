@@ -11,9 +11,6 @@ from iothub_client import IoTHubClient, IoTHubTransportProvider
 from iothub_client import IoTHubMessage, IoTHubError
 from iothub_client_sample import send_confirmation_callback
 
-
-
-
 class VirtualDeviceObject(object):
     
     DEVICE_ID = "[DEVICE_ID]"
