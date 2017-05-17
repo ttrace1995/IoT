@@ -93,17 +93,12 @@ class VirtualDeviceObject(object):
                     self.FOUND = True
                     self.IOT_CONFIG = field['iot_config']
                     self.DATABASE_CONFIG = field['database_config']
-                    self.PRIMARY_KEY = field['device_primary_key']
+                    self.PRIMARY_KEY = "fnJFDPbSXxAMOMGkl984YbN2nFmhGPK2p5h49CrNs9I="
                     
             if self.FOUND == False:
                 print ("NO REGISTERED DEVICE WITH THAT ID")
                 return
                     
-        with open('settings/iot.json') as json_data_file:
-            data = json.load(json_data_file)
-            for field in data['iot_config']:
-                if field['iot_tag'] == self.IOT_CONFIG:
-                    self.HOST_NAME = field['host_name']
                     
                     
         with open('settings/database.json') as json_data_file:
@@ -125,7 +120,7 @@ class VirtualDeviceObject(object):
                     self.DB_DATA_INTERVALNO = field['db_data_intervalNum']
                     self.DB_DATA_LOCATIONNO = field['db_data_locationNum']
                     
-        self.CONNECTION_STRING = ("HostName="+self.HOST_NAME+".azure-devices.net;DeviceId="+self.DEVICE_ID+";SharedAccessKey="+self.PRIMARY_KEY).__str__()
+        self.CONNECTION_STRING = ("HostName=ATSPOC.azure-devices.net;DeviceId="+self.DEVICE_ID+";SharedAccessKey="+self.PRIMARY_KEY).__str__()
         
         self.initialize_values()
         
@@ -272,7 +267,10 @@ class VirtualDeviceObject(object):
                 is_update = self.check_for_updates()
                 if is_update == True:
                     print ( "TTRRUUEE" )
-                    msg_txt_formatted = "\nLAST_UPDATE: "+self.LAST_TIMESTAMP.__str__()+"\n\nTOTAL_TARGETS: "+self.TOTAL_TARGETS.__str__()+"\nMAX_SPEED: "+self.MAX_SPEED.__str__()+"\nMIN_SPEED: "+self.MIN_SPEED.__str__()+"\nMEAN SPEED: "+self.MEAN_SPEED.__str__()+"\n"
+                    
+                    j = { "Total Cars: " : self.TOTAL_TARGETS.__str__(), "Average Speed: " : self.MEAN_SPEED.__str__(), "Max Speed: " : self.MAX_SPEED.__str__(), "Min Speed: " : self.MIN_SPEED.__str__(), "Raw Data: " : self.DATA.__str__() } 
+                    msg_txt_formatted = json.dumps(j)
+                    
                     # messages can be encoded as string or bytearray
                     print ( msg_txt_formatted )
                     if (message_counter & 1) == 1:

@@ -47,6 +47,6 @@ def delete_device(iothrm, DID):
 #print("NO REGISTERED DEVICES")
     
 if __name__ == '__main__':
-    find_device("::VD::0000179df19f")
+    find_device("::VD::0000179def77")
     
     
