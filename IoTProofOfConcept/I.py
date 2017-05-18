@@ -135,8 +135,6 @@ class VirtualDeviceObject(object):
         print ( "    Properties: %s" % key_value_pair )
         self.SEND_CALLBACKS += 1
         print ( "    Total calls confirmed: %d" % self.SEND_CALLBACKS )
-        self.LAST_SYNC = time.strftime("%d/%m/%Y")+" -- "+time.strftime("%H:%M:%S")
-        print ( "    Last_IOT_Callback: " + self.LAST_SYNC )
        
     def iothub_client_init(self):
         # prepare iothub client
