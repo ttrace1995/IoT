@@ -49,7 +49,7 @@ class TVD(object):
             data = json.load(json_data_file)
             for field in data['iot_config']:
                 self.HOST_NAME = field['host_name']
-                self.CONNECTION_STRING = field['pk_connection_string']
+                self.CONNECTION_STRING = field['pk_connection_string'].__str__()
         
         #Defines the protocols and other values necessary to transfer data to the iothub      
         self.PROTOCOL = IoTHubTransportProvider.MQTT
@@ -72,7 +72,6 @@ class TVD(object):
                  
         try:
             tetryon_ids = []
-            formatted_tetryon_ids = []
             
             db = mysql.connector.connect(user=self.DB_USER,
                     password=self.DB_PASS,
@@ -87,7 +86,9 @@ class TVD(object):
             for i in xrange(len(tetryon_ids)):
                 tetryon_ids[i] = ''.join(tetryon_ids[i])
             
-            diff = list(set(formatted_tetryon_ids) - set(registered_ids))
+            diff = list(set(tetryon_ids) - set(registered_ids))
+            
+            print ( diff )
             
             if diff == []:
                 print ("No new devices found")
@@ -102,7 +103,7 @@ class TVD(object):
         
         for i in xrange(len(devices)): 
             
-            iothub_registry_manager = IoTHubRegistryManager(self.CONNECTION_STRING)
+            #iothub_registry_manager = IoTHubRegistryManager(self.CONNECTION_STRING)
     
             try:
                 ID = "::VD::"+devices[i].__str__()
@@ -139,11 +140,19 @@ class TVD(object):
             'timestamp' : '0',
             'loc_num' : '0'
             })
+        
     
         with open('settings/tetryon_devices', "w" ) as json_data:
             json.dump(data, json_data) 
+            
+        with open('settings/tetryon_devices') as json_data:
+            data = json.load(json_data)
+            print ( data )
+        
+        
         
             print_device_info("Created Device", new_device)
+            time.sleep(5)
             self.initialize_json()
         
         
@@ -168,6 +177,7 @@ class TVD(object):
         #Cycle through every json device and update its timestamp based on the value pulled from tetryon
         with open('settings/tetryon_devices') as json_data_file:
             devices = json.load(json_data_file)
+            print ( devices )
             for i in xrange(len(devices['registered_devices'])):
             
                 try:
@@ -195,9 +205,8 @@ class TVD(object):
                     
                     with open('settings/tetryon_devices', 'w') as json_data_file:
                         json_data_file.write(json.dumps(devices))
-                        
+                      
                     self.start_cycle()
-                    
                     
                 
                 except KeyboardInterrupt:

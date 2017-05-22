@@ -161,7 +161,9 @@ def write_json_device(d_id, new_device):
         'device_authMethod': new_device.authMethod.__str__(),
         'database_config': 'tetryon',
         'iot_config': 'iothub',
-        'device_status': 'PENDING APPROVAL'
+        'device_status': 'PENDING APPROVAL',
+        'timestamp' : '0',
+        'loc_num' : '0'
         })
     
     with open('settings/devices.json', "w" ) as json_data:

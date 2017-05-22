@@ -17,7 +17,7 @@ class VirtualDeviceObject(object):
     
     hold = 0
     
-    headers = {'Content-Type':'application/json', 'Accept':'application/json', 'appKey':'777fce0a-e1af-4f47-9608-91c2812887a9'}
+    headers = {'Content-Type':'application/json', 'Accept':'application/json', 'appKey':'d3c92c06-166e-4adf-af65-3be398663260'}
     
     CONNECTION_STRING = "[CONNECTION_STRING]"
     
@@ -89,7 +89,7 @@ class VirtualDeviceObject(object):
     def pull_account_devices(self):
         global check
         #print(self.ACCOUNT)
-        url = "http://trafficloud.alltrafficsolutions.com/Thingworx/Things/"+self.ACCOUNT+"/Services/ListAccountDevices?appKey=777fce0a-e1af-4f47-9608-91c2812887a9";
+        url = "http://trafficloud.alltrafficsolutions.com/Thingworx/Things/"+self.ACCOUNT+"/Services/ListAccountDevices?appKey=d3c92c06-166e-4adf-af65-3be398663260";
         #print url 
         r = requests.post(url, headers=self.headers, data={}) 
         #print ("here2")
@@ -102,15 +102,15 @@ class VirtualDeviceObject(object):
                 #print ( temp['rows'][i]['PhysicalOwner'] )
                 
                 
-                self.list_recent_moves( temp['rows'][i]['EntityName'] )
+                #self.list_recent_moves( temp['rows'][i]['EntityName'] )
         
         else:
             print('ERROR  failed on ', url, ' with code ',
             r.status_code, 'data', r.content)
      
     def list_recent_moves(self, entity_name):
-        url = "http://trafficloud.alltrafficsolutions.com/Thingworx/Things/ATS.HistorySite/Services/ListRecentMoves?appKey=777fce0a-e1af-4f47-9608-91c2812887a9"; 
-        data = { "DeviceThingName" : entity_name, "SearchStartTime" : "0" }
+        url = "http://trafficloud.alltrafficsolutions.com/Thingworx/Things/"+entity_name+"/Services/GetSiteAtDate?appKey=d3c92c06-166e-4adf-af65-3be398663260"; 
+        data = { }
         data_json = json.dumps( data )
         r = requests.post(url, headers=self.headers, data=data_json)
 
@@ -122,9 +122,10 @@ class VirtualDeviceObject(object):
                 print ( "\n" )
                 return
             else:
-                #print temp['rows']  
-                latest = max(temp['rows'], key=lambda ev: ev['timestamp'])
-                current_site = latest['NewSite']
+                
+                current_site = temp['rows'][0]['result']
+                print ( current_site )
+                
                 print( current_site )
                 print ( "\n" )
                 self.pull_device_history(current_site, entity_name)
@@ -134,7 +135,7 @@ class VirtualDeviceObject(object):
             r.status_code, 'data', r.content)
              
     def pull_device_history(self, current_site, entity_name):
-        url = "http://trafficloud.alltrafficsolutions.com/Thingworx/Things/ATS.HistoryTrafficLog/Services/QueryStreamData?appKey=777fce0a-e1af-4f47-9608-91c2812887a9";
+        url = "http://trafficloud.alltrafficsolutions.com/Thingworx/Things/ATS.HistoryTrafficLog/Services/QueryStreamData?appKey=d3c92c06-166e-4adf-af65-3be398663260";
         data = { "maxItems" : "1", "query" : { "filters": { "type" : "LIKE", "fieldName" : "DeviceThingName", "value" : entity_name
                                 } }, "source" : current_site }
         data_json = json.dumps(data)
@@ -144,7 +145,7 @@ class VirtualDeviceObject(object):
             self.JSON_DATA = json.dumps(temp, indent=4, sort_keys=True)
             if self.hold < 13:
                 print( entity_name )
-                #print (self.JSON_DATA)
+                print (self.JSON_DATA)
                 print self.hold
                 con = self.create_connection(entity_name)
                 self.iothub_try(self.JSON_DATA, con)

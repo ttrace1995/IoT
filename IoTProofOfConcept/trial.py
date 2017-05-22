@@ -5,6 +5,8 @@ Created on May 17, 2017
 import time
 import json
 import mysql.connector
+import logging
+logging.basicConfig(filename='f.log',level=logging.DEBUG)
 from iothub_client import IoTHubClient, IoTHubTransportProvider
 from iothub_client import IoTHubMessage, IoTHubError
 from iothub_client_sample import send_confirmation_callback
@@ -88,7 +90,11 @@ class TVD(object):
         
     def start_cycle(self):
         
+        logging.info('started listening...')
+        
         while True:
+            
+            time.sleep(20)
             
             with open('settings/tetryon_devices') as json_data_file:
                 devices = json.load(json_data_file)
@@ -106,19 +112,21 @@ class TVD(object):
             
                         cursor = db.cursor()
                         
+                        
                         sql_tet_time = "SELECT MAX("+self.DB_DATA_TIME+") FROM "+self.DB_DATA_TABLE+" WHERE "+self.DB_DATA_LOCATIONNO+"="+devices['registered_devices'][i]['loc_num']
                         cursor.execute(sql_tet_time)
-                        time = cursor.fetchone()
+                        t = cursor.fetchone()
                         
-                        tetryon_time = time[0].__str__()
+                        tetryon_time = t[0].__str__()
                         #print ( tetryon_time )
                         json_time = devices['registered_devices'][i]['timestamp']
                         #print ( json_time )
                         
                         
                         if tetryon_time == 'None':
-                            print ( "nothing" )
-                    
+                            #time.sleep(10)
+                            pass
+                        
                         elif int(tetryon_time) > int(json_time):
         
                             pull_data = "SELECT "+self.DB_DATA_SPEED+" FROM "+self.DB_DATA_TABLE+" WHERE "+self.DB_DATA_LOCATIONNO+"="+devices['registered_devices'][i]['loc_num']+" AND _Time>"+json_time+" AND _Time<="+tetryon_time+" ORDER BY "+self.DB_DATA_TIME+" ASC" 
@@ -143,12 +151,15 @@ class TVD(object):
                             with open('settings/tetryon_devices', 'w') as json_data_file:
                                 json_data_file.write(json.dumps(devices))
                                 
+                            #time.sleep(10)
+                                
                         else:
-                            print ( "Waiting for update....")
-                            #print ( devices['registered_devices'][i]['device_id'] )
-                            #print ( "NO UPDATE" )
+                            logging.info('no updates')
+                            
+                            #time.sleep(10)
                         
-                        
+                            
+            
                     except KeyboardInterrupt:
                         print ( "IoTHubClient sample stopped" )
                         
@@ -161,17 +172,19 @@ class TVD(object):
             
             msg_txt_formatted = json.dumps(data)
             # messages can be encoded as string or bytearray
-            print ( msg_txt_formatted )
+            #print ( msg_txt_formatted )
             if (message_counter & 1) == 1:
                 message = IoTHubMessage(bytearray(msg_txt_formatted, 'utf8'))
                 client.send_event_async(message, send_confirmation_callback, message_counter)
                 time.sleep(10)
+                logging.info('sent new message to iot')
             else:
                 message = IoTHubMessage(msg_txt_formatted)
                 message.message_id = "message_%d" % message_counter
                 message.correlation_id = "correlation_%d" % message_counter
                 client.send_event_async(message, send_confirmation_callback, message_counter)
                 time.sleep(10)
+                logging.info('sent new message to iot')
         
         except IoTHubError as iothub_error:
             print ( "Unexpected error %s from IoTHub" % iothub_error )
@@ -204,14 +217,14 @@ class TVD(object):
     #Confirmation that the data was received by the IoT  
     def send_confirmation_callback(self, message, result, user_context):
         global SEND_CALLBACKS
-        print ( "Confirmation[%d] received for message with result = %s" % (user_context, result) )
-        map_properties = message.properties()
-        print ( "    message_id: %s" % message.message_id )
-        print ( "    correlation_id: %s" % message.correlation_id )
-        key_value_pair = map_properties.get_internals()
-        print ( "    Properties: %s" % key_value_pair )
+        #print ( "Confirmation[%d] received for message with result = %s" % (user_context, result) )
+        #map_properties = message.properties()
+        #print ( "    message_id: %s" % message.message_id )
+        #print ( "    correlation_id: %s" % message.correlation_id )
+        #key_value_pair = map_properties.get_internals()
+        #print ( "    Properties: %s" % key_value_pair )
         self.SEND_CALLBACKS += 1
-        print ( "    Total calls confirmed: %d" % self.SEND_CALLBACKS )     
+        #print ( "    Total calls confirmed: %d" % self.SEND_CALLBACKS )     
             
                 
             
