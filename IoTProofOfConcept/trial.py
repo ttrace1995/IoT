@@ -40,7 +40,7 @@ class TVD(object):
                 self.DB_DATA_INTERVALNO = field['db_data_intervalNum']
                 self.DB_DATA_LOCATIONNO = field['db_data_locationNum']
                 
-        with open('settings/ATSPOC') as json_data_file:
+        with open('settings/TylersHub') as json_data_file:
             data = json.load(json_data_file)
             for field in data['iot_config']:
                 self.HOST_NAME = field['host_name']
@@ -56,7 +56,7 @@ class TVD(object):
 
     def initialize_json(self):
     
-        with open('settings/tetryon_devices') as json_data_file:
+        with open('settings/devices.json') as json_data_file:
             devices = json.load(json_data_file)
             #for field in data['registered_devices']:
             for i in xrange(len(devices['registered_devices'])):
@@ -79,7 +79,7 @@ class TVD(object):
                     
                     devices['registered_devices'][i]['timestamp'] = time[0].__str__()
                     
-                    with open('settings/tetryon_devices', 'w') as json_data_file:
+                    with open('settings/devices.json', 'w') as json_data_file:
                         json_data_file.write(json.dumps(devices))
                     
                     
@@ -94,15 +94,16 @@ class TVD(object):
         
         while True:
             
-            time.sleep(20)
+            time.sleep(5)
             
-            with open('settings/tetryon_devices') as json_data_file:
+            with open('settings/devices.json') as json_data_file:
                 devices = json.load(json_data_file)
                 #for field in data['registered_devices']:
                 for i in xrange(len(devices['registered_devices'])):
                     iot_id = devices['registered_devices'][i]['device_id']
                     #tetryon_sid = iot_id[6:]
                     #print ( tetryon_sid )
+                    print (iot_id)
             
                     try:
                         db = mysql.connector.connect(user=self.DB_USER,
@@ -124,11 +125,11 @@ class TVD(object):
                         
                         
                         if tetryon_time == 'None':
-                            #time.sleep(10)
+                            print ("none")
                             pass
                         
                         elif int(tetryon_time) > int(json_time):
-        
+                            print ("cool")
                             pull_data = "SELECT "+self.DB_DATA_SPEED+" FROM "+self.DB_DATA_TABLE+" WHERE "+self.DB_DATA_LOCATIONNO+"="+devices['registered_devices'][i]['loc_num']+" AND _Time>"+json_time+" AND _Time<="+tetryon_time+" ORDER BY "+self.DB_DATA_TIME+" ASC" 
                             cursor.execute(pull_data)
                             first_data = cursor.fetchall()
@@ -148,12 +149,13 @@ class TVD(object):
                             self.send_to_iot(data, devices['registered_devices'][i]['device_id'], connection_string)
             
                             devices['registered_devices'][i]['timestamp'] = tetryon_time
-                            with open('settings/tetryon_devices', 'w') as json_data_file:
+                            with open('settings/devices.json', 'w') as json_data_file:
                                 json_data_file.write(json.dumps(devices))
                                 
                             #time.sleep(10)
                                 
                         else:
+                            print ("elif")
                             logging.info('no updates')
                             
                             #time.sleep(10)

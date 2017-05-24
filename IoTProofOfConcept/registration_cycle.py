@@ -122,7 +122,7 @@ def pull_status(d_id):
                     
 def create_new_device(d_id):
     
-    with open('settings/iot.json') as json_data_file:
+    with open('settings/TylersHub') as json_data_file:
         data = json.load(json_data_file)
         for field in data['iot_config']:
             CONNECTION_STRING = field['pk_connection_string'].__str__()
